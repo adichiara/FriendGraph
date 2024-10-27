@@ -1,5 +1,9 @@
-// Select the SVG element
-const svg = d3.select("svg");
+// Set up SVG dimensions and create a group for zoom/pan
+const svg = d3.select("svg")
+    .attr("viewBox", `0 0 ${window.innerWidth} ${window.innerHeight}`)
+    .attr("preserveAspectRatio", "xMidYMid meet");
+
+const g = svg.append("g");  // Group to apply zoom/pan transformations
 
 // Load the CSV data
 d3.csv("data.csv").then(data => {
@@ -30,7 +34,7 @@ d3.csv("data.csv").then(data => {
     for (let i = 0; i < 300; i++) simulation.tick();  // Run initial ticks to settle layout
 
     // Draw links (edges)
-    const link = svg.append("g")
+    const link = g.append("g")
         .attr("class", "links")
         .selectAll("line")
         .data(links)
@@ -38,7 +42,7 @@ d3.csv("data.csv").then(data => {
         .attr("stroke", "#aaa");
 
     // Draw nodes
-    const node = svg.append("g")
+    const node = g.append("g")
         .attr("class", "nodes")
         .selectAll("circle")
         .data(nodes)
@@ -48,7 +52,7 @@ d3.csv("data.csv").then(data => {
         .call(drag(simulation));
 
     // Add node labels
-    const label = svg.append("g")
+    const label = g.append("g")
         .attr("class", "labels")
         .selectAll("text")
         .data(nodes)
@@ -97,7 +101,7 @@ d3.csv("data.csv").then(data => {
     const zoom = d3.zoom()
         .scaleExtent([0.5, 4])  // Set min and max zoom levels
         .on("zoom", (event) => {
-            svg.attr("transform", event.transform);
+            g.attr("transform", event.transform);
         });
 
     svg.call(zoom);
