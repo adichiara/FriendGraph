@@ -1,12 +1,5 @@
-// Set up responsive SVG dimensions
-
-var svg = d3.select("#chart1").append("svg")
-.attr("preserveAspectRatio", "xMinYMin meet")
-.attr("viewBox", '0 0 ' + width + ' ' + height)
-    .call(zoom)
-    .attr("class", "chart")
-    .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+// Select the SVG element
+const svg = d3.select("svg");
 
 // Load the CSV data
 d3.csv("data.csv").then(data => {
@@ -30,7 +23,7 @@ d3.csv("data.csv").then(data => {
     const simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links).id(d => d.id).distance(60))
         .force("charge", d3.forceManyBody().strength(-100))
-        .force("center", d3.forceCenter(200, 300))  // Center based on viewBox dimensions
+        .force("center", d3.forceCenter(window.innerWidth / 2, window.innerHeight / 2))  // Center based on viewport dimensions
         .stop();  // Stop automatic simulation
 
     // Run the simulation manually and fix node positions
