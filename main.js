@@ -1,7 +1,12 @@
 // Set up responsive SVG dimensions
-const svg = d3.select("svg")
-    .attr("viewBox", `0 0 400 600`)  // Optimized for mobile portrait dimensions
-    .attr("preserveAspectRatio", "xMidYMid meet");
+
+var svg = d3.select("#chart1").append("svg")
+.attr("preserveAspectRatio", "xMinYMin meet")
+.attr("viewBox", '0 0 ' + width + ' ' + height)
+    .call(zoom)
+    .attr("class", "chart")
+    .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 // Load the CSV data
 d3.csv("data.csv").then(data => {
