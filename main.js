@@ -1,7 +1,7 @@
-// Set up SVG dimensions
-const width = 800;
-const height = 600;
-const svg = d3.select("svg");
+// Set up responsive SVG dimensions
+const svg = d3.select("svg")
+    .attr("viewBox", `0 0 400 600`)  // Optimized for mobile portrait dimensions
+    .attr("preserveAspectRatio", "xMidYMid meet");
 
 // Load the CSV data
 d3.csv("data.csv").then(data => {
@@ -19,13 +19,17 @@ d3.csv("data.csv").then(data => {
     // Scale for node size based on degree
     const sizeScale = d3.scaleLinear()
         .domain([1, d3.max(Object.values(nodeDegree))])
-        .range([5, 20]);  // Adjust range for min/max node sizes
+        .range([5, 15]);  // Smaller range to suit mobile dimensions
 
     // Force simulation setup
     const simulation = d3.forceSimulation(nodes)
-        .force("link", d3.forceLink(links).id(d => d.id).distance(100))
-        .force("charge", d3.forceManyBody().strength(-300))
-        .force("center", d3.forceCenter(width / 2, height / 2));
+        .force("link", d3.forceLink(links).id(d => d.id).distance(60))
+        .force("charge", d3.forceManyBody().strength(-100))
+        .force("center", d3.forceCenter(200, 300))  // Center based on viewBox dimensions
+        .stop();  // Stop automatic simulation
+
+    // Run the simulation manually and fix node positions
+    for (let i = 0; i < 300; i++) simulation.tick();  // Run initial ticks to settle layout
 
     // Draw links (edges)
     const link = svg.append("g")
@@ -72,7 +76,7 @@ d3.csv("data.csv").then(data => {
             .attr("y", d => d.y);
     });
 
-    // Drag functionality
+    // Drag functionality to fix node position on drag end
     function drag(simulation) {
         return d3.drag()
             .on("start", event => {
@@ -86,8 +90,17 @@ d3.csv("data.csv").then(data => {
             })
             .on("end", event => {
                 if (!event.active) simulation.alphaTarget(0);
-                event.subject.fx = null;
-                event.subject.fy = null;
+                event.subject.fx = event.subject.x;  // Keep node in place after dragging
+                event.subject.fy = event.subject.y;
             });
     }
+
+    // Add zoom and pan functionality
+    const zoom = d3.zoom()
+        .scaleExtent([0.5, 4])  // Set min and max zoom levels
+        .on("zoom", (event) => {
+            svg.attr("transform", event.transform);
+        });
+
+    svg.call(zoom);
 });
