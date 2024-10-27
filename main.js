@@ -10,11 +10,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Load the CSV data
     d3.csv("data.csv").then(data => {
-        // Confirm data is loaded
         console.log("Data loaded:", data);
 
         // Convert the CSV data to a format compatible with D3
-        const nodes = Array.from(new Set(data.flatMap(d => [d.Source, d.Target])), id => ({ id }));
+        const nodes = Array.from(new Set(data.flatMap(d => [d.Source, d.Target])), id => ({
+            id,
+            x: Math.random() * window.innerWidth,  // Random initial x position within the viewport
+            y: Math.random() * window.innerHeight  // Random initial y position within the viewport
+        }));
         const links = data.map(d => ({ source: d.Source, target: d.Target }));
 
         // Calculate node degrees for sizing
@@ -27,17 +30,17 @@ document.addEventListener("DOMContentLoaded", function () {
         // Scale for node size based on degree
         const sizeScale = d3.scaleLinear()
             .domain([1, d3.max(Object.values(nodeDegree))])
-            .range([5, 15]);  // Smaller range to suit mobile dimensions
+            .range([5, 15]);
 
         // Force simulation setup
         const simulation = d3.forceSimulation(nodes)
             .force("link", d3.forceLink(links).id(d => d.id).distance(60))
             .force("charge", d3.forceManyBody().strength(-100))
-            .force("center", d3.forceCenter(window.innerWidth / 2, window.innerHeight / 2))  // Center based on viewport dimensions
-            .stop();  // Stop automatic simulation
+            .force("center", d3.forceCenter(window.innerWidth / 2, window.innerHeight / 2))
+            .stop();
 
-        // Run the simulation manually and fix node positions
-        for (let i = 0; i < 300; i++) simulation.tick();  // Run initial ticks to settle layout
+        // Run the simulation until it stabilizes
+        for (let i = 0; i < 500; i++) simulation.tick();  // Increase tick count to ensure stabilization
 
         // Draw links (edges)
         const link = g.append("g")
@@ -53,7 +56,7 @@ document.addEventListener("DOMContentLoaded", function () {
             .selectAll("circle")
             .data(nodes)
             .enter().append("circle")
-            .attr("r", d => sizeScale(nodeDegree[d.id] || 1))  // Size based on degree
+            .attr("r", d => sizeScale(nodeDegree[d.id] || 1))
             .attr("fill", "lightblue")
             .call(drag(simulation));
 
@@ -98,19 +101,25 @@ document.addEventListener("DOMContentLoaded", function () {
                 })
                 .on("end", event => {
                     if (!event.active) simulation.alphaTarget(0);
-                    event.subject.fx = event.subject.x;  // Keep node in place after dragging
+                    event.subject.fx = event.subject.x;
                     event.subject.fy = event.subject.y;
                 });
         }
 
         // Add zoom and pan functionality
         const zoom = d3.zoom()
-            .scaleExtent([0.5, 4])  // Set min and max zoom levels
+            .scaleExtent([0.5, 4])
             .on("zoom", (event) => {
                 g.attr("transform", event.transform);
             });
 
         svg.call(zoom);
+
+        // Center the view on the nodes after layout
+        svg.call(
+            zoom.transform,
+            d3.zoomIdentity.translate(window.innerWidth / 4, window.innerHeight / 4).scale(1.2)
+        );
     }).catch(error => {
         console.error("Error loading or processing data:", error);
     });
