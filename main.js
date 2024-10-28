@@ -10,7 +10,7 @@ const width = +svg.attr("width"),
 const simulation = d3.forceSimulation()
   .force("link", d3.forceLink().id(d => d.id))
   .force("charge", d3.forceManyBody().strength(-100))
-  .force("center", d3.forceCenter(width / 2, height / 2));
+  .force("center", d3.forceCenter(width / 1, height / 1));
 
 // Load data from data.json
 d3.json("data.json").then(data => {
