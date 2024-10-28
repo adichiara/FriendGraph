@@ -8,8 +8,8 @@ const width = +svg.attr("width"),
 
 // Create the force simulation with centering force
 const simulation = d3.forceSimulation()
-  .force("link", d3.forceLink().id(d => d.id).distance(120))  // Set link distance for spacing
-  .force("charge", d3.forceManyBody().strength(-250))  // Adjust charge strength for spacing
+  .force("link", d3.forceLink().id(d => d.id).distance(100))  // Set link distance for spacing
+  .force("charge", d3.forceManyBody().strength(-200))  // Adjust charge strength for spacing
   .force("center", d3.forceCenter(width / 2, height / 2));
 
 // Load data from data.json
@@ -17,34 +17,34 @@ d3.json("data.json").then(data => {
   const nodes = data.nodes;
   const links = data.links;
 
-  // Set initial positions for each node to the center of the viewport
+  // Initial positioning to center nodes for stability
   nodes.forEach(node => {
     node.x = width / 2;
     node.y = height / 2;
   });
 
-  // Scale for edge width based on 'strength' attribute in links (if strength is provided)
+  // Define a scale for link stroke width based on strength
   const strengthScale = d3.scaleLinear()
-    .domain(d3.extent(links, d => d.strength || 1))  // default to 1 if strength is missing
-    .range([1, 3]); // min/max width of lines
+    .domain([1, 8])  // Assuming strength ranges from 1 to 8
+    .range([1, 5]);  // Scale stroke width from 1 to 5
 
-  // Add links (edges) with default styling
+  // Add links (edges) with styling
   const link = svg.append("g")
     .attr("class", "links")
     .selectAll("line")
     .data(links)
     .enter().append("line")
-    .attr("stroke", "#999")   // Set a default stroke color
-    .attr("stroke-opacity", 0.6)
-    .attr("stroke-width", d => strengthScale(d.strength || 1));  // Scale based on strength if available
+    .attr("stroke", "#888")   // Set a default stroke color
+    .attr("stroke-opacity", 0.7)
+    .attr("stroke-width", d => strengthScale(d.strength));  // Scale based on strength
 
-  // Add nodes with fixed size and color
+  // Add nodes with color and size, and make them draggable
   const node = svg.append("g")
     .attr("class", "nodes")
     .selectAll("circle")
     .data(nodes)
     .enter().append("circle")
-    .attr("r", 8)  // node size
+    .attr("r", 8)  // Node size
     .attr("fill", "#1f78b4")  // Node color
     .call(d3.drag()
       .on("start", dragstarted)
@@ -60,7 +60,7 @@ d3.json("data.json").then(data => {
     .attr("dy", -10)  // Position label slightly above the node
     .attr("text-anchor", "middle")
     .style("font-family", "Arial, sans-serif")
-    .style("font-size", "12px")
+    .style("font-size", "10px")
     .style("fill", "#333")
     .text(d => d.id);  // Display `id` as the label
 
@@ -71,9 +71,6 @@ d3.json("data.json").then(data => {
 
   simulation.force("link")
     .links(links);
-
-  // Run extra ticks on the simulation to settle initial layout
-  for (let i = 0; i < 300; i++) simulation.tick();
 
   // Function to update link and node positions on each tick
   function ticked() {
