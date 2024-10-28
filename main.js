@@ -1,4 +1,4 @@
-// Set up SVG dimensions and append a group for zoom/pan
+// Set up SVG dimensions and create a group for the graph
 const svg = d3.select("svg")
   .attr("width", window.innerWidth)
   .attr("height", window.innerHeight);
@@ -6,10 +6,23 @@ const svg = d3.select("svg")
 const width = +svg.attr("width"),
   height = +svg.attr("height");
 
-// Create the force simulation with centering force
+// Create a group element for the graph, which will be transformed by zooming/panning
+const g = svg.append("g");
+
+// Set up the zoom behavior
+const zoom = d3.zoom()
+  .scaleExtent([0.5, 5])  // Min and max zoom levels
+  .on("zoom", (event) => {
+    g.attr("transform", event.transform);  // Apply the transformation to the group
+  });
+
+// Apply the zoom behavior to the SVG
+svg.call(zoom);
+
+// Create the force simulation
 const simulation = d3.forceSimulation()
-  .force("link", d3.forceLink().id(d => d.id).distance(100))  // Set link distance for spacing
-  .force("charge", d3.forceManyBody().strength(-100))  // Adjust charge strength for spacing
+  .force("link", d3.forceLink().id(d => d.id).distance(100))
+  .force("charge", d3.forceManyBody().strength(-200))
   .force("center", d3.forceCenter(width / 2, height / 2));
 
 // Load data from data.json
@@ -17,53 +30,47 @@ d3.json("data.json").then(data => {
   const nodes = data.nodes;
   const links = data.links;
 
-  // Initial positioning to center nodes for stability
-  nodes.forEach(node => {
-    node.x = width / 2;
-    node.y = height / 2;
-  });
-
   // Define a scale for link stroke width based on strength
   const strengthScale = d3.scaleLinear()
     .domain([1, 8])  // Assuming strength ranges from 1 to 8
     .range([1, 5]);  // Scale stroke width from 1 to 5
 
-  // Add links (edges) with styling
-  const link = svg.append("g")
+  // Add links (edges) to the group with styling
+  const link = g.append("g")
     .attr("class", "links")
     .selectAll("line")
     .data(links)
     .enter().append("line")
-    .attr("stroke", "#888")   // Set a default stroke color
+    .attr("stroke", "#888")
     .attr("stroke-opacity", 0.7)
-    .attr("stroke-width", d => strengthScale(d.strength));  // Scale based on strength
+    .attr("stroke-width", d => strengthScale(d.strength));
 
   // Add nodes with color and size, and make them draggable
-  const node = svg.append("g")
+  const node = g.append("g")
     .attr("class", "nodes")
     .selectAll("circle")
     .data(nodes)
     .enter().append("circle")
     .attr("r", 8)  // Node size
-    // .attr("fill", "#1f78b4")  // Node color
-    .attr("fill", "#ff2222")  // Node color
+    .attr("fill", "#1f78b4")
     .call(d3.drag()
       .on("start", dragstarted)
       .on("drag", dragged)
-      .on("end", dragended));
+      .on("end", dragended))
+    .on("dblclick", unfixNode);  // Add double-click to unfix node
 
   // Add labels to each node using the id field
-  const label = svg.append("g")
+  const label = g.append("g")
     .attr("class", "labels")
     .selectAll("text")
     .data(nodes)
     .enter().append("text")
-    .attr("dy", -10)  // Position label slightly above the node
+    .attr("dy", -10)
     .attr("text-anchor", "middle")
     .style("font-family", "Arial, sans-serif")
     .style("font-size", "10px")
     .style("fill", "#333")
-    .text(d => d.id);  // Display `id` as the label
+    .text(d => d.id);
 
   // Apply nodes and links to the simulation
   simulation
@@ -104,6 +111,13 @@ d3.json("data.json").then(data => {
 
   function dragended(event, d) {
     if (!event.active) simulation.alphaTarget(0);
+    // Keep nodes fixed in place after dragging
+    d.fx = d.x;
+    d.fy = d.y;
+  }
+
+  // Double-click function to unfix a node
+  function unfixNode(event, d) {
     d.fx = null;
     d.fy = null;
   }
