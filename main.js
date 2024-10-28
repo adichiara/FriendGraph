@@ -8,8 +8,8 @@ const width = +svg.attr("width"),
 
 // Create the force simulation with centering force
 const simulation = d3.forceSimulation()
-  .force("link", d3.forceLink().id(d => d.id).distance(100))  // Increase distance for better separation
-  .force("charge", d3.forceManyBody().strength(-300))
+  .force("link", d3.forceLink().id(d => d.id).distance(120))  // Set link distance for spacing
+  .force("charge", d3.forceManyBody().strength(-250))  // Adjust charge strength for spacing
   .force("center", d3.forceCenter(width / 2, height / 2));
 
 // Load data from data.json
@@ -17,7 +17,7 @@ d3.json("data.json").then(data => {
   const nodes = data.nodes;
   const links = data.links;
 
-  // Set initial positions to the center to avoid clustering off-screen
+  // Set initial positions for each node to the center of the viewport
   nodes.forEach(node => {
     node.x = width / 2;
     node.y = height / 2;
@@ -100,4 +100,15 @@ d3.json("data.json").then(data => {
   }
 
   function dragged(event, d) {
-    d.fx = event
+    d.fx = event.x;
+    d.fy = event.y;
+  }
+
+  function dragended(event, d) {
+    if (!event.active) simulation.alphaTarget(0);
+    d.fx = null;
+    d.fy = null;
+  }
+}).catch(error => {
+  console.error("Error loading or processing data:", error);
+});
