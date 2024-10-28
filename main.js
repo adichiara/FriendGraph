@@ -1,18 +1,16 @@
-const svg = d3.select("svg")
-  .attr("width", width)
-  .attr("height", height);
-
-// Scale for the link distance based on strength
-const distanceScale = d3.scaleLinear()
-  .domain(d3.extent(data, d => d.strength)) // scale based on min and max of `strength`
-  .range([50, 200]); // Adjust range as needed; lower values bring nodes closer together
+const svg = d3.select("svg"),
+  width = +svg.attr("width"),
+  height = +svg.attr("height");
 
 const simulation = d3.forceSimulation()
-  .force("link", d3.forceLink()
-    .id(d => d.id)
-    .distance(d => distanceScale(d.strength))) // Set distance based on strength
+  .force("link", d3.forceLink().id(d => d.id))
   .force("charge", d3.forceManyBody().strength(-400))
   .force("center", d3.forceCenter(width / 2, height / 2));
+
+// Scale for edge width based on strength
+const strengthScale = d3.scaleLinear()
+  .domain(d3.extent(data, d => d.strength)) // adjust based on min/max of strength
+  .range([1, 5]); // min/max width of lines
 
 // Add links (edges)
 const link = svg.append("g")
@@ -20,7 +18,7 @@ const link = svg.append("g")
   .selectAll("line")
   .data(data)
   .enter().append("line")
-  .attr("stroke-width", 2); // Set fixed width or use another scale if needed
+  .attr("stroke-width", d => strengthScale(d.strength)); // scale width based on strength
 
 // Add nodes
 const node = svg.append("g")
