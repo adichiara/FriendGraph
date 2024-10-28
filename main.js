@@ -45,7 +45,8 @@ d3.json("data.json").then(data => {
     .data(nodes)
     .enter().append("circle")
     .attr("r", 8)  // Node size
-    .attr("fill", "#1f78b4")  // Node color
+    // .attr("fill", "#1f78b4")  // Node color
+    .attr("fill", "#ff2222")  // Node color
     .call(d3.drag()
       .on("start", dragstarted)
       .on("drag", dragged)
