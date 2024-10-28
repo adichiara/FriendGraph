@@ -1,69 +1,17 @@
-const svg = d3.select("svg"),
-  width = +svg.attr("width"),
-  height = +svg.attr("height");
-
-const simulation = d3.forceSimulation()
-  .force("link", d3.forceLink().id(d => d.id))
-  .force("charge", d3.forceManyBody().strength(-400))
-  .force("center", d3.forceCenter(width / 2, height / 2));
-
-// Scale for edge width based on strength
+// Scale for edge width based on strength, with an increased range for clarity
 const strengthScale = d3.scaleLinear()
-  .domain(d3.extent(data, d => d.strength)) // adjust based on min/max of strength
-  .range([1, 5]); // min/max width of lines
+  .domain(d3.extent(data, d => d.strength)) // scale based on min and max of `strength`
+  .range([2, 15]); // Experiment with larger values for visibility
 
-// Add links (edges)
+// Add links (edges) with console logging to verify scale application
 const link = svg.append("g")
   .attr("class", "links")
   .selectAll("line")
   .data(data)
   .enter().append("line")
-  .attr("stroke-width", d => strengthScale(d.strength)); // scale width based on strength
+  .attr("stroke-width", d => {
+    const width = strengthScale(d.strength);
+    console.log(`Edge strength: ${d.strength}, Stroke width: ${width}`); // Debug log
+    return width;
+  });
 
-// Add nodes
-const node = svg.append("g")
-  .attr("class", "nodes")
-  .selectAll("circle")
-  .data(nodes)
-  .enter().append("circle")
-  .attr("r", 5) // node size
-  .call(d3.drag()
-    .on("start", dragstarted)
-    .on("drag", dragged)
-    .on("end", dragended));
-
-simulation
-  .nodes(nodes)
-  .on("tick", ticked);
-
-simulation.force("link")
-  .links(data);
-
-function ticked() {
-  link
-    .attr("x1", d => d.source.x)
-    .attr("y1", d => d.source.y)
-    .attr("x2", d => d.target.x)
-    .attr("y2", d => d.target.y);
-
-  node
-    .attr("cx", d => d.x)
-    .attr("cy", d => d.y);
-}
-
-function dragstarted(event, d) {
-  if (!event.active) simulation.alphaTarget(0.3).restart();
-  d.fx = d.x;
-  d.fy = d.y;
-}
-
-function dragged(event, d) {
-  d.fx = event.x;
-  d.fy = event.y;
-}
-
-function dragended(event, d) {
-  if (!event.active) simulation.alphaTarget(0);
-  d.fx = null;
-  d.fy = null;
-}
