@@ -4,8 +4,8 @@ const svg = d3.select("svg")
 
 // Scale for the link distance based on strength
 const distanceScale = d3.scaleLinear()
-  .domain(d3.extent(data, d => d.strength)) // scale based on min and max of `strength`
-  .range([50, 200]); // Adjust range as needed; lower values bring nodes closer together
+  .domain(d3.extent(links, d => d.strength)) // Use `links` instead of `data`
+  .range([50, 200]); // Adjust range as needed
 
 const simulation = d3.forceSimulation()
   .force("link", d3.forceLink()
