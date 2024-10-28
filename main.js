@@ -8,8 +8,8 @@ const width = +svg.attr("width"),
 
 // Create the force simulation with centering force
 const simulation = d3.forceSimulation()
-  .force("link", d3.forceLink().id(d => d.id).distance(50))  // Set link distance for spacing
-  .force("charge", d3.forceManyBody().strength(-200))  // Adjust charge strength for spacing
+  .force("link", d3.forceLink().id(d => d.id).distance(100))  // Set link distance for spacing
+  .force("charge", d3.forceManyBody().strength(-100))  // Adjust charge strength for spacing
   .force("center", d3.forceCenter(width / 2, height / 2));
 
 // Load data from data.json
