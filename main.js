@@ -6,6 +6,8 @@ const svg = d3.select("svg")
 const width = +svg.attr("width"),
   height = +svg.attr("height");
 
+const maxDegree = 1;  // Set the number of degrees of separation to show
+
 // Create a group element for the graph, which will be transformed by zooming/panning
 const g = svg.append("g");
 
@@ -27,8 +29,13 @@ const simulation = d3.forceSimulation()
 
 // Load data from data.json
 d3.json("data.json").then(data => {
-  const nodes = data.nodes;
-  const links = data.links;
+  let nodes = data.nodes;
+  let links = data.links;
+  let activeNode = null;  // Track the active node
+
+  // Set "Airen" as the default active node on load
+  activeNode = nodes.find(d => d.id === "Airen");
+  simulation.alpha(1).restart();  // Restart simulation to apply visibility changes
 
   // Define a scale for link stroke width based on strength
   const strengthScale = d3.scaleLinear()
@@ -53,11 +60,11 @@ d3.json("data.json").then(data => {
     .enter().append("circle")
     .attr("r", 8)  // Node size
     .attr("fill", "#1f78b4")
+    .on("click", setActiveNode)  // Click to set active node
     .call(d3.drag()
       .on("start", dragstarted)
       .on("drag", dragged)
-      .on("end", dragended))
-    .on("dblclick", unfixNode);  // Add double-click to unfix node
+      .on("end", dragended));
 
   // Add labels to each node using the id field
   const label = g.append("g")
@@ -86,15 +93,19 @@ d3.json("data.json").then(data => {
       .attr("x1", d => d.source.x)
       .attr("y1", d => d.source.y)
       .attr("x2", d => d.target.x)
-      .attr("y2", d => d.target.y);
+      .attr("y2", d => d.target.y)
+      .style("display", d => (isVisible(d.source, maxDegree) && isVisible(d.target, maxDegree)) ? "block" : "none");
 
     node
       .attr("cx", d => d.x)
-      .attr("cy", d => d.y);
+      .attr("cy", d => d.y)
+      .style("display", d => isVisible(d, maxDegree) ? "block" : "none")
+      .attr("fill", d => d === activeNode ? "#ff6347" : "#1f78b4");  // Highlight active node in a different color
 
     label
       .attr("x", d => d.x)
-      .attr("y", d => d.y);
+      .attr("y", d => d.y)
+      .style("display", d => isVisible(d, maxDegree) ? "block" : "none");
   }
 
   // Drag functions to fix node position while dragging
@@ -111,16 +122,48 @@ d3.json("data.json").then(data => {
 
   function dragended(event, d) {
     if (!event.active) simulation.alphaTarget(0);
-    // Keep nodes fixed in place after dragging
     d.fx = d.x;
     d.fy = d.y;
   }
 
+  // Set the active node on click
+  function setActiveNode(event, d) {
+    activeNode = d === activeNode ? null : d;  // Toggle active node
+    simulation.alpha(1).restart();  // Restart simulation to apply visibility changes
+  }
+
+  // Helper function to determine visibility of nodes and links up to a specified degree
+  function isVisible(node, degree) {
+    if (!activeNode) return true;  // Show all nodes if no active node
+    if (degree === 0) return node === activeNode;  // Only show active node if degree is 0
+
+    // Create a set of nodes that are within the specified degree of the active node
+    const neighbors = new Set([activeNode.id]);
+    let currentLayer = new Set([activeNode.id]);
+
+    // Expand neighbors up to the specified degree
+    for (let i = 0; i < degree; i++) {
+      const nextLayer = new Set();
+      links.forEach(link => {
+        if (currentLayer.has(link.source.id) && !neighbors.has(link.target.id)) {
+          nextLayer.add(link.target.id);
+          neighbors.add(link.target.id);
+        } else if (currentLayer.has(link.target.id) && !neighbors.has(link.source.id)) {
+          nextLayer.add(link.source.id);
+          neighbors.add(link.source.id);
+        }
+      });
+      currentLayer = nextLayer;
+    }
+
+    return neighbors.has(node.id);  // Only show nodes within specified degrees of separation
+  }
+
   // Double-click function to unfix a node
-  function unfixNode(event, d) {
+  node.on("dblclick", (event, d) => {
     d.fx = null;
     d.fy = null;
-  }
+  });
 }).catch(error => {
   console.error("Error loading or processing data:", error);
 });
